@@ -97,4 +97,6 @@ Create a rest endpoint for authenticating
 ```
 
 Client should add returned token to Authentication Http Header example:
+```ShellSession
 curl -X GET -H"Accept: application/json" -H "Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjby56YS5icm9ua29kZSIsImlhdCI6MTQ1MTkwMjQ5ODIxOSwiZXhwIjowLCJ1c2VySWQiOm51bGwsInVzZXJOYW1lIjoidGhldW5zIiwiY2xpZW50SWQiOm51bGwsImNsaWVudE5hbWUiOm51bGwsInJvbGVzIjpudWxsfQ==./klZgSjD0NwbV1v3xVC/zrv8A8qqcmlpoo2aM0mbDJI=" "http://127.0.0.1:8080/jwtSample/api/login" -i
+```
