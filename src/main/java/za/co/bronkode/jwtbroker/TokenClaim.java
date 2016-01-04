@@ -118,8 +118,6 @@ public class TokenClaim {
     }
 
     public TokenClaim() {
-        this.iss = "za.co.bronkode";
-        this.iat = System.currentTimeMillis();
-        this.exp = this.iat + (8*60*60*1000); //expire 8 hours in future by default
+        
     }
 }

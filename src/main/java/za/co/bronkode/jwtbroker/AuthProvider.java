@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015 Theuns Snyman.
+ * Copyright 2016 theuns.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,29 +23,55 @@
  */
 package za.co.bronkode.jwtbroker;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+
 /**
  *
- * @author ts
+ * @author theuns
  */
-public class Token {
+@RequestScoped
+public class AuthProvider {
 
-    private TokenHeader header;
-    private Object claim;
+    @Inject
+    HttpServletRequest request;
 
-    public TokenHeader getHeader() {
-        return header;
+    private boolean validToken;
+    private Token token;
+
+    public boolean isValidToken() {
+        return validToken;
     }
 
-    public void setHeader(TokenHeader header) {
-        this.header = header;
+    public void setValidToken(boolean validToken) {
+        this.validToken = validToken;
     }
 
-    public <T extends TokenClaim> T getClaim(Class<T> type) {
-        return (T)claim;
+    public Token getToken() {
+        return token;
     }
 
-    public <T extends TokenClaim> void setClaim(Object claim) {
-        this.claim = claim;
+    public void setToken(Token token) {
+        this.token = token;
+    }
+
+    @PostConstruct
+    public void init() {
+
+        Object awt = request.getAttribute("authTokenText");
+        this.validToken = false;
+        if (awt != null && (awt instanceof String)) {
+            String headerToken = awt.toString();
+            Token decodedToken = Tokenizer.DecodeToken(headerToken);
+            if(decodedToken !=null){
+                //TODO: check expiry
+                this.token = decodedToken;
+                this.validToken = true;
+            }
+        }
+
     }
 
 }

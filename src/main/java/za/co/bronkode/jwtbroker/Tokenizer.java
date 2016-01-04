@@ -41,13 +41,36 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class Tokenizer {
 
-    private static final String SECRET = "the way of the world";
+    private static String privateKey;
+    private static String issuer;
+    private static int expiryMinutes;
+    private static Class claimClass;
+
+    public static void setPrivateKey(String privateKey) {
+        Tokenizer.privateKey = privateKey;
+    }
+    
+    public static void setIssuer(String issuer){
+        Tokenizer.issuer =issuer;
+    }
+    
+    public static void setExpirtyMinutes(int expiryMinutes){
+        Tokenizer.expiryMinutes = expiryMinutes;
+    }
+
+    public static Class getClaimClass() {
+        return claimClass;
+    }
+
+    public static void setClaimClass(Class claimClass) {
+        Tokenizer.claimClass = claimClass;
+    }
 
     public static Token DecodeToken(String token) {
         if (IsValidToken(token)) {
             try {
                 String[] items = token.split("\\.");
-                
+
                 Token t = new Token();
 
                 ObjectMapper mapper = new ObjectMapper();
@@ -56,8 +79,8 @@ public class Tokenizer {
                 String headerjson = new String(headerBytes);
                 String claimjson = new String(claimBytes);
                 t.setHeader(mapper.readValue(headerjson, TokenHeader.class));
-                t.setClaim(mapper.readValue(claimjson, TokenClaim.class));
-                
+                t.setClaim(mapper.readValue(claimjson, claimClass));
+
                 return t;
             } catch (IOException ex) {
                 Logger.getLogger(Tokenizer.class.getName()).log(Level.SEVERE, null, ex);
@@ -89,7 +112,7 @@ public class Tokenizer {
 
             hmapper.writeValue(hwriter, token.getHeader());
             String header = hwriter.toString();
-            hmapper.writeValue(cwriter, token.getClaim());
+            hmapper.writeValue(cwriter, token.getClaim(claimClass));
             String claim = cwriter.toString();
             hwriter.close();
             cwriter.close();
@@ -115,7 +138,7 @@ public class Tokenizer {
             sb.append(".");
             sb.append(claim);
             Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKey key = new SecretKeySpec(SECRET.getBytes(), "HmacSHA256");
+            SecretKey key = new SecretKeySpec(privateKey.getBytes(), "HmacSHA256");
 
             mac.init(key);
             String signature = Base64.getEncoder().encodeToString(mac.doFinal(sb.toString().getBytes()));
@@ -125,5 +148,14 @@ public class Tokenizer {
         }
         return "";
     }
-    
+
+    public static <T extends TokenClaim> T getNewClaim() throws InstantiationException, IllegalAccessException {
+        T claim;
+        claim = (T)claimClass.newInstance();
+        claim.setIss(issuer);
+        claim.setIat(System.currentTimeMillis());
+        claim.setExp(expiryMinutes *60*1000);
+        return claim;
+    }
+
 }

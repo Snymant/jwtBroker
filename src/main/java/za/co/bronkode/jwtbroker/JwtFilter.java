@@ -41,23 +41,39 @@ package za.co.bronkode.jwtbroker;
 
 import javax.servlet.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.ext.Provider;
 
 /**
  *
  * @author ts
  */
 // Implements Filter class
-@Provider
 public class JwtFilter implements Filter {
 
     @Override
     public void init(FilterConfig config)
             throws ServletException {
-        // Get init parameter 
-        String testParam = config.getInitParameter("test-param");
-        
+        // Get init parameter
+        Enumeration<String> initParameterNames = config.getInitParameterNames();
+        String privateKey = config.getInitParameter("privateKey");
+        String issuer = config.getInitParameter("issuer");
+        String configMinutes = config.getInitParameter("expiryMinutes");
+        int expirtyMinutes = 10;
+        if(configMinutes != null)
+              expirtyMinutes = Integer.parseInt(configMinutes);
+        Tokenizer.setPrivateKey(privateKey);
+        Tokenizer.setIssuer(issuer);
+        //Tokenizer.setExpirtyMinutes(expirtyMinutes);
+        try {
+            Tokenizer.setClaimClass(Class.forName(config.getInitParameter("claimClass")));
+        } catch (ClassNotFoundException ex) {
+            ex.addSuppressed(new Exception("Defaulting to " +TokenClaim.class.toString() ));
+            Logger.getLogger(JwtFilter.class.getName()).log(Level.SEVERE, null, ex);
+            Tokenizer.setClaimClass(TokenClaim.class);
+            
+        }
     }
 
     @Override
@@ -85,6 +101,8 @@ public class JwtFilter implements Filter {
                 request.setAttribute("authTokenText", jt);           
             }
         }        
+        
+        System.out.println("JWT Filter hit!");
 
         // Pass request back down the filter chain      
         chain.doFilter(request, response);
