@@ -23,64 +23,48 @@
  */
 package za.co.bronkode.jwtbroker;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import java.security.Principal;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
  *
  * @author theuns
  */
-@RequestScoped
-public class AuthProvider {
+public class JwtServletRequestWrapper extends HttpServletRequestWrapper {
 
-    @Inject
-    HttpServletRequest request;
+    AuthProvider provider;
 
-    private boolean validToken;
-    private Token token;
+    public JwtServletRequestWrapper(HttpServletRequest request) {
+        super(request);
+        provider = new AuthProvider(request);
 
-    public AuthProvider() {
+        //provider.s
     }
 
-    public AuthProvider(HttpServletRequest request) {
-        this.request = request;
-    }
-    
-    
-
-    public boolean isValidToken() {
-        return validToken;
-    }
-
-    public void setValidToken(boolean validToken) {
-        this.validToken = validToken;
-    }
-
-    public Token getToken() {
-        return token;
-    }
-
-    public void setToken(Token token) {
-        this.token = token;
-    }
-
-    @PostConstruct
-    public void init() {
-
-        Object awt = request.getAttribute("authTokenText");
-        this.validToken = false;
-        if (awt != null && (awt instanceof String)) {
-            String headerToken = awt.toString();
-            Token decodedToken = Tokenizer.DecodeToken(headerToken);
-            if(decodedToken !=null){
-                //TODO: check expiry
-                this.token = decodedToken;
-                this.validToken = true;
-            }
+    @Override
+    public Principal getUserPrincipal() {
+        if (provider.isValidToken()) {
+            return new JwtPrincipal(provider.getToken());
+        } else {
+            return super.getUserPrincipal(); //To change body of generated methods, choose Tools | Templates.
         }
+    }
 
+    @Override
+    public boolean isUserInRole(String role) {
+        if (provider.isValidToken()) {
+            TokenClaim c = provider.getToken().getClaim(TokenClaim.class);
+            if (c.getRoles() != null) {
+                for (String r : c.getRoles()) {
+                    if (r.equalsIgnoreCase(role)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        return super.isUserInRole(role); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

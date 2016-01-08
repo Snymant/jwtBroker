@@ -23,40 +23,15 @@
  */
 package za.co.bronkode.jwtbroker;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
 
 /**
  *
  * @author theuns
  */
-@RequestScoped
-public class AuthProvider {
-
-    @Inject
-    HttpServletRequest request;
-
-    private boolean validToken;
+public class JwtPrincipal implements Principal{
+    
     private Token token;
-
-    public AuthProvider() {
-    }
-
-    public AuthProvider(HttpServletRequest request) {
-        this.request = request;
-    }
-    
-    
-
-    public boolean isValidToken() {
-        return validToken;
-    }
-
-    public void setValidToken(boolean validToken) {
-        this.validToken = validToken;
-    }
 
     public Token getToken() {
         return token;
@@ -65,22 +40,25 @@ public class AuthProvider {
     public void setToken(Token token) {
         this.token = token;
     }
-
-    @PostConstruct
-    public void init() {
-
-        Object awt = request.getAttribute("authTokenText");
-        this.validToken = false;
-        if (awt != null && (awt instanceof String)) {
-            String headerToken = awt.toString();
-            Token decodedToken = Tokenizer.DecodeToken(headerToken);
-            if(decodedToken !=null){
-                //TODO: check expiry
-                this.token = decodedToken;
-                this.validToken = true;
-            }
-        }
-
+    
+    
+    public JwtPrincipal() {
     }
 
+    public JwtPrincipal(Token token) {
+        this.token = token;
+    }
+    
+    
+
+    @Override
+    public String getName() {
+        if(token != null)
+            return token.getClaim(TokenClaim.class).getUserName();
+        else
+            return null;
+    }
+    
+    
+    
 }

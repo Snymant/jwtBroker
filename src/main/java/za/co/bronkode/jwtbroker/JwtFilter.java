@@ -102,10 +102,13 @@ public class JwtFilter implements Filter {
             }
         }        
         
-        System.out.println("JWT Filter hit!");
-
-        // Pass request back down the filter chain      
-        chain.doFilter(request, response);
+        //System.out.println("JWT Filter hit!");
+        
+        // Pass request back down the filter chain 
+        JwtServletRequestWrapper forwardWrapper = new JwtServletRequestWrapper(httpRequest);
+        chain.doFilter(forwardWrapper, response);
+       
+        
 
     }
 
